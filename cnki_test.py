@@ -14,7 +14,7 @@ parser.add_argument("-p", "--pages", type = int, default = '10', help = 'please 
 args = parser.parse_args()
 
 firefox_options = FirefoxOptions()
-#firefox_options.set_headless()
+firefox_options.set_headless()
 browser=webdriver.Firefox(options = firefox_options)
 browser.get("http://www.cnki.net")
 
@@ -27,7 +27,7 @@ for name in [args.search]:
     browser.switch_to_frame("iframeResult")
     num = 1
     for page in range(args.pages):
-        titles = browser.find_elements_by_xpath('/html/body/form/table/tbody/tr[2]/td/table/tbody/tr')[1:21]
+        titles = browser.find_elements_by_xpath('/html/body/form/table/tbody/tr[2]/td/table/tbody/tr')[5:21]
         now_handle = browser.current_window_handle
         for title in titles:
             item = {}
@@ -42,7 +42,7 @@ for name in [args.search]:
                 title.find_element_by_xpath('./td[2]/a').click()
                 time.sleep(2)
                 browser.switch_to_window(browser.window_handles[-1])
-                ##judge if exists foud
+                ##judge if exists foud /html/body/div[5]/div[3]/div[3]/div[1]/p[2]/a[1]
                 if browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[3]').text != "" and browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[3]').text[:3] != "DOI":
                     item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[3]').text
                 else:
@@ -51,22 +51,26 @@ for name in [args.search]:
                 num += 1
             except:
                 try:
-                    item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[2]').text
+                    if browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text != "" and browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text[:3] != "分类号" and browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text[:3] != "DOI":
+                        item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text
+                    else:
+                        item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[2]').text
+                    browser.close()
                     num += 1
+                    print("no occur")
                 except:
-                    print("some errors occur")
                     browser.close()
                     browser.switch_to_window(now_handle)
+                    print("some errors occur")
                     continue
                 else:
                     print("no error")
-                    browser.close()
                     browser.switch_to_window(now_handle)
             else:
                 browser.switch_to_window(now_handle)
                 print("no error")
             print(item)
-            with open('title_author_keywords.csv','a') as f:
+            with open('title_keywords.csv','a') as f:
                 f_write = csv.writer(f)
                 f_write.writerow((item["index"],item["paper_name"],item["time"],item["keyword"]))
             browser.switch_to_window(now_handle)

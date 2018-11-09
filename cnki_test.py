@@ -14,7 +14,7 @@ parser.add_argument("-p", "--pages", type = int, default = '10', help = 'please 
 args = parser.parse_args()
 
 firefox_options = FirefoxOptions()
-firefox_options.set_headless()
+#firefox_options.set_headless()
 browser=webdriver.Firefox(options = firefox_options)
 browser.get("http://www.cnki.net")
 
@@ -25,9 +25,12 @@ for name in [args.search]:
     input1.send_keys(Keys.ENTER)
     time.sleep(5)
     browser.switch_to_frame("iframeResult")
+    browser.find_element_by_xpath('/html/body/form/table/tbody/tr[1]/td/table/tbody/tr[1]/td/table/tbody/tr/td[2]/div[3]/a[3]').click()
+    time.sleep(40)
+    browser.switch_to_window(browser.window_handles[-1])
     num = 1
     for page in range(args.pages):
-        titles = browser.find_elements_by_xpath('/html/body/form/table/tbody/tr[2]/td/table/tbody/tr')[5:21]
+        titles = browser.find_elements_by_xpath('/html/body/form/table/tbody/tr[2]/td/table/tbody/tr')[1:51]
         now_handle = browser.current_window_handle
         for title in titles:
             item = {}
@@ -35,14 +38,16 @@ for name in [args.search]:
             item["paper_name"] = " 题目:" + title.find_element_by_xpath('./td[2]').text
 #            item["author"] = " 作者:" + title.find_element_by_xpath('./td[3]').text
 #            item["source"] = " 期刊:" + title.find_element_by_xpath('./td[4]/a').text
-            item["time"] = " 发表时间:" + title.find_element_by_xpath('./td[5]').text[:4]
+#            item["time"] = " 发表时间:" + title.find_element_by_xpath('./td[5]').text[:4]
             try:
                 target = title.find_element_by_xpath("./td[2]/a")
                 browser.execute_script("arguments[0].scrollIntoView();", target)
                 title.find_element_by_xpath('./td[2]/a').click()
                 time.sleep(2)
                 browser.switch_to_window(browser.window_handles[-1])
-                ##judge if exists foud /html/body/div[5]/div[3]/div[3]/div[1]/p[2]/a[1]
+                ##judge if exists foud /html/body/div[5]/div[3]/div[4]/div[1]/p[2]/a[1]
+                ##if p[2] exists, store it
+                item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[2]').text
                 if browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[3]').text != "" and browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[3]').text[:3] != "DOI":
                     item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[4]/div[1]/p[3]').text
                 else:
@@ -51,18 +56,22 @@ for name in [args.search]:
                 num += 1
             except:
                 try:
+                    item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[2]').text
                     if browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text != "" and browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text[:3] != "分类号" and browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text[:3] != "DOI":
                         item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[3]').text
                     else:
                         item["keyword"] = browser.find_element_by_xpath('/html/body/div[5]/div[3]/div[3]/div[1]/p[2]').text
                     browser.close()
                     num += 1
-                    print("no occur")
+                    print("no error")
                 except:
                     browser.close()
                     browser.switch_to_window(now_handle)
-                    print("some errors occur")
-                    continue
+                    if "keyword" in item.keys():
+                        print("no error")
+                    else:
+                        print("some errors occur")
+                        continue
                 else:
                     print("no error")
                     browser.switch_to_window(now_handle)
@@ -72,7 +81,7 @@ for name in [args.search]:
             print(item)
             with open('title_keywords.csv','a') as f:
                 f_write = csv.writer(f)
-                f_write.writerow((item["index"],item["paper_name"],item["time"],item["keyword"]))
+                f_write.writerow((item["index"],item["paper_name"],item["keyword"]))
             browser.switch_to_window(now_handle)
         time.sleep(2)
         print(page)
@@ -81,4 +90,6 @@ for name in [args.search]:
         else:
             browser.find_element_by_xpath('/html/body/form/table/tbody/tr[3]/td/table/tbody/tr/td/div/a[11]').click()
         time.sleep(2)
+#        browser.switch_to_window(browser.window_handles[-1])
+#        browser.find_element_by_xpath('/html/body/form/table/tbody/tr[1]/td/table/tbody/tr[1]/td/table/tbody/tr/td[2]/div[3]/a[3]').click()
         browser.switch_to_window(browser.window_handles[-1])

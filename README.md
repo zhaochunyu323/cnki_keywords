@@ -1,7 +1,7 @@
 # cnki_keywords
 Crawl title, year and keywords of papers in CNKI
 
-I used Selenium+Python3 to crawl keywords of papers in CNKI, some other infos like author and press.
+I used `Selenium+Python3` to crawl keywords of papers in CNKI, some other infos like author and press.
 
 Usage:
 ---
